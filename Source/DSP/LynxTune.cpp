@@ -978,3 +978,5 @@ void clearPublishedScale() noexcept
 }
 
 } // namespace lynx::lynxtune
+
+} // closes scope left open during DAW-specific adapter removal
