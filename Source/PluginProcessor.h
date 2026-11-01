@@ -30,7 +30,7 @@ public:
     void setStateInformation(const void*, int) override;
     juce::AudioProcessorValueTreeState& parameters() noexcept { return apvts; }
     const std::vector<float>& parameterValues() const noexcept { return values; }
-    const lynx::lynxtune::Effect& engine() const noexcept { return *effect; }
+    const lynx::Effect& engine() const noexcept { return *effect; }
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     juce::AudioProcessorValueTreeState apvts;
