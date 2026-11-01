@@ -78,7 +78,6 @@ private:
     bool removeMode = true; // true = Remove, false = Bypass when clicking piano
 
     juce::String midiNoteName (float normalised) const;
-    void styleAll();
     void updatePageVisibility();
     void paintCorrectionDial (juce::Graphics& g, float sx, float sy);
     void paintPitchGraph (juce::Graphics& g, float sx, float sy);
