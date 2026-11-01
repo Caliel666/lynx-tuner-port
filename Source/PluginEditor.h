@@ -19,13 +19,13 @@ public:
     void timerCallback() override;
 
 private:
-    using SliderAttachment  = juce::AudioProcessorValueTreeState::SliderAttachment;
-    using ButtonAttachment  = juce::AudioProcessorValueTreeState::ButtonAttachment;
-    using ComboAttachment   = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
+    using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+    using ComboAttachment  = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
 
     LynxTunerAudioProcessor& processor;
 
-    // Top bar
+    // Top
     juce::Label title;
 
     // INPUT
@@ -49,7 +49,7 @@ private:
     int activePage = 0; // 0 = Pitch Graph, 1 = Advanced, 2 = Real-Time
 
     // REAL-TIME page
-    juce::ToggleButton speedLink, refTone;
+    juce::ToggleButton speedLink, refTone, vibratoEnable;
     juce::Slider speed, tolCents, tolTime, vibDepth, correctionAmt, refToneLevel;
 
     // ADVANCED page
@@ -62,9 +62,8 @@ private:
     juce::TextButton bypassBtn, removeBtn, resetBtn, sendBtn, receiveBtn;
     juce::TextButton groupBtn, latchBtn;
     std::array<juce::TextButton, 7> rangeBtns; // Bass … Generic
-    juce::ComboBox voicePreset; // fallback / extra
 
-    // 12 note switches (also driven by the piano)
+    // 12 note switches
     std::array<juce::ToggleButton, 12> noteKeys;
 
     // Attachments
@@ -72,7 +71,7 @@ private:
     std::vector<std::unique_ptr<ButtonAttachment>> buttonAttachments;
     std::vector<std::unique_ptr<ComboAttachment>>  comboAttachments;
 
-    // Live pitch history for the graph
+    // Live pitch history
     std::array<float, 240> pitchHistory{};
     int pitchHistoryWrite = 0;
     int lastLearnedMask = -1;
@@ -84,7 +83,7 @@ private:
     void paintCorrectionDial (juce::Graphics& g, float sx, float sy);
     void paintPitchGraph (juce::Graphics& g, float sx, float sy);
     void paintKeyboard (juce::Graphics& g, float sx, float sy);
-    void handleKeyboardClick (float xNorm, float yNorm);
+    void handleKeyboardClick (float x, float y);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LynxTunerAudioProcessorEditor)
 };
