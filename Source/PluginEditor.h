@@ -5,11 +5,12 @@
 #include <memory>
 #include <vector>
 
-class LynxTunerAudioProcessorEditor final : public juce::AudioProcessorEditor {
+class LynxTunerAudioProcessorEditor final : public juce::AudioProcessorEditor, private juce::Timer {
 public:
     explicit LynxTunerAudioProcessorEditor(LynxTunerAudioProcessor&);
     void paint(juce::Graphics&) override;
     void resized() override;
+    void timerCallback() override;
 private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
@@ -26,5 +27,6 @@ private:
     std::array<juce::ToggleButton, 12> noteKeys;
     int activePage = 0;
     bool removeMode = true;
+    juce::String midiNoteName(float normalized) const;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LynxTunerAudioProcessorEditor)
 };
