@@ -23,7 +23,7 @@ private:
     std::vector<std::unique_ptr<ButtonAttachment>> buttonAttachments;
     std::vector<std::unique_ptr<ComboAttachment>> comboAttachments;
     std::array<juce::TextButton, 3> pages;
-    std::array<juce::TextButton, 12> noteKeys;
+    std::array<juce::ToggleButton, 12> noteKeys;
     int activePage = 0;
     bool removeMode = true;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LynxTunerAudioProcessorEditor)
