@@ -27,7 +27,7 @@ jobs:
             artifact: LYNX-Tuner-VST3-linux-x64
             build_args: --config Release
             artifact_path: build/LynxTuner_artefacts/Release/VST3/LYNX Tuner.vst3
-          - os: macos-14
+          - os: macos-15
             artifact: LYNX-Tuner-VST3-macos
             build_args: --config Release
             artifact_path: build/LynxTuner_artefacts/Release/VST3/LYNX Tuner.vst3
