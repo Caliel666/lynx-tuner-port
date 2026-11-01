@@ -181,7 +181,7 @@ void LynxTunerAudioProcessorEditor::paint(juce::Graphics& g) {
         g.setColour(muted); g.drawText("Play a voice or an instrument through the insert to see its pitch",R(330,705,580,26).toNearestInt(),juce::Justification::centred);
     }
     g.setColour(accent);g.fillRoundedRectangle(R(16,893,1218,12),3.0f*sx);
-    auto bed=R(16,909,1218,114); g.setColour(juce::Colour(0xffd9dbe0));g.fillRoundedRectangle(bed,4.0f*sx);
+    auto bed=R(16,909,1218,54); g.setColour(juce::Colour(0xffd9dbe0));g.fillRoundedRectangle(bed,4.0f*sx);
     for(int i=0;i<28;++i){float x=bed.getX()+bed.getWidth()*(float)i/28.0f;g.setColour(juce::Colour(0xff363640));g.drawVerticalLine((int)x,bed.getY(),bed.getBottom());}
     for(int i=0;i<28;++i) if(i%7!=2 && i%7!=6){
         float x=bed.getX()+bed.getWidth()*((float)i+0.68f)/28.0f;
@@ -209,7 +209,7 @@ void LynxTunerAudioProcessorEditor::resized() {
 void LynxTunerAudioProcessorEditor::mouseDown(const juce::MouseEvent& e) {
     const float sx=(float)getWidth()/1240.0f, sy=(float)getHeight()/965.0f;
     const float x=e.position.x/sx, y=e.position.y/sy;
-    if (y<909.0f || y>1023.0f || x<16.0f || x>1234.0f) return;
+    if (y<909.0f || y>963.0f || x<16.0f || x>1234.0f) return;
     const float keyWidth=1218.0f/28.0f;
     int white=(int)((x-16.0f)/keyWidth);
     white=juce::jlimit(0,27,white);
