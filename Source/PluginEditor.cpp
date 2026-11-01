@@ -34,7 +34,7 @@ LynxTunerAudioProcessorEditor::LynxTunerAudioProcessorEditor(LynxTunerAudioProce
     auto& state = processor.parameters();
 
     auto addSlider = [&](juce::Slider& s, int param) {
-        styleSlider(s); addAndMakeVisible(s);
+        styleSlider(s); s.textFromValueFunction = [param](double v) { return juce::String(lynx::lynxtune::paramText(param, (float)v)); }; addAndMakeVisible(s);
         sliderAttachments.push_back(std::make_unique<SliderAttachment>(state, "p" + juce::String(param), s));
     };
     auto addToggle = [&](juce::ToggleButton& b, const juce::String& name, int param) {
@@ -55,7 +55,7 @@ LynxTunerAudioProcessorEditor::LynxTunerAudioProcessorEditor(LynxTunerAudioProce
     addCombo(scale,1,{"Chromatic","Major","Minor","Harmonic minor","Melodic minor","Major pentatonic","Minor pentatonic","Blues","Dorian","Mixolydian","Phrygian","Lydian","Locrian","Custom"},14);
     addCombo(midiChannel,10,{"Off","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"},17);
     addToggle(lowLatency,"LOW LATENCY",9); addToggle(formant,"FORMANT",4);
-    addToggle(classic,"CLASSIC",47); addToggle(learnScale,"LEARN SCALE",46);
+    addToggle(classic,"CLASSIC",46); addToggle(learnScale,"LEARN SCALE",45);
     addToggle(inScale,"IN SCALE",93);
 
     const char* tabNames[]={"PITCH GRAPH","ADVANCED","REAL-TIME"};
@@ -79,6 +79,14 @@ LynxTunerAudioProcessorEditor::LynxTunerAudioProcessorEditor(LynxTunerAudioProce
     title.setFont(juce::Font(18.0f,juce::Font::bold));
     addAndMakeVisible(title);
 }
+
+juce::String LynxTunerAudioProcessorEditor::midiNoteName(float normalized) const {
+    const int note = juce::jlimit(0, 127, (int)std::lround(normalized * 127.0f));
+    static const char* names[] = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
+    return juce::String(names[note % 12]) + juce::String(note / 12 - 1);
+}
+
+void LynxTunerAudioProcessorEditor::timerCallback() { repaint(); }
 
 void LynxTunerAudioProcessorEditor::paint(juce::Graphics& g) {
     g.fillAll(bg);
@@ -116,7 +124,19 @@ void LynxTunerAudioProcessorEditor::paint(juce::Graphics& g) {
     // Pitch graph panel and octave keyboard bed.
     g.setColour(panelDark); g.fillRoundedRectangle(R(10,637,1220,165),8.0f*sx);
     for(int i=0;i<14;++i){float y=(650.0f+i*10.5f)*sy;g.setColour(juce::Colour(0xff41404d));g.drawHorizontalLine((int)y,20*sx,1220*sx);}
-    g.setColour(muted);g.setFont(juce::Font(11.0f*sx));g.drawText("Play a voice or an instrument through the insert to see its pitch",R(330,705,580,26).toNearestInt(),juce::Justification::centred);
+    g.setColour(muted); g.setFont(juce::Font(10.0f*sx));
+    for (int n=0;n<14;++n) {
+        static const char* names[]={"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
+        const int midi=48+n;
+        g.drawText(juce::String(names[midi%12])+juce::String(midi/12-1),R(18,642+n*10.5f,38,12).toNearestInt(),juce::Justification::centredLeft);
+    }
+    if (voiced) {
+        const float y = 790.0f - juce::jlimit(0.0f,1.0f,sung)*128.0f;
+        g.setColour(accentLight); g.fillEllipse(R(1180,y,7,7));
+        g.setColour(text); g.drawText(midiNoteName(sung),R(1080,y-18,90,16).toNearestInt(),juce::Justification::centredRight);
+    } else {
+        g.setColour(muted); g.drawText("Play a voice or an instrument through the insert to see its pitch",R(330,705,580,26).toNearestInt(),juce::Justification::centred);
+    }
     g.setColour(accent);g.fillRoundedRectangle(R(16,893,1218,12),3.0f*sx);
     auto bed=R(16,909,1218,114); g.setColour(juce::Colour(0xffd9dbe0));g.fillRoundedRectangle(bed,4.0f*sx);
     for(int i=0;i<28;++i){float x=bed.getX()+bed.getWidth()*(float)i/28.0f;g.setColour(juce::Colour(0xff363640));g.drawVerticalLine((int)x,bed.getY(),bed.getBottom());}
