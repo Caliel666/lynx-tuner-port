@@ -65,7 +65,12 @@ LynxTunerAudioProcessorEditor::LynxTunerAudioProcessorEditor(LynxTunerAudioProce
     addCombo(key,0,{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"},12);
     addCombo(scale,1,{"Chromatic","Major","Minor","Harmonic minor","Melodic minor","Major pentatonic","Minor pentatonic","Blues","Dorian","Mixolydian","Phrygian","Lydian","Locrian","Custom"},14);
     addCombo(midiChannel,10,{"Off","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"},17);
-    addToggle(lowLatency,"LOW LATENCY",9); addToggle(formant,"FORMANT",4);
+    addToggle(lowLatency,"LOW LATENCY",lynx::lynxtune::lowLatency); addToggle(formant,"FORMANT",lynx::lynxtune::formantPreserve);
+    learnScale.onClick=[this] {
+        if (learnScale.getToggleState() && midiChannel.getSelectedId() == 1) {
+            midiChannel.setSelectedId(2,juce::sendNotification);
+        }
+    };
     addToggle(classic,"CLASSIC",lynx::lynxtune::classicMode); addToggle(learnScale,"LEARN SCALE",lynx::lynxtune::learnMidi);
     addToggle(inScale,"IN SCALE",93);
 
@@ -98,7 +103,22 @@ juce::String LynxTunerAudioProcessorEditor::midiNoteName(float normalized) const
     return juce::String(names[note % 12]) + juce::String(note / 12 - 1);
 }
 
-void LynxTunerAudioProcessorEditor::timerCallback() { repaint(); }
+void LynxTunerAudioProcessorEditor::timerCallback() {
+    if (learnScale.getToggleState()) {
+        const int mask=juce::jlimit(0,4095,(int)std::lround(processor.engine().controlOutput(5)*4095.0f));
+        if (mask!=0 && mask!=lastLearnedMask) {
+            auto& state=processor.parameters();
+            for(int i=0;i<12;++i) {
+                const bool enabled=(mask&(1<<i))!=0;
+                if(auto* param=state.getParameter("p"+juce::String(lynx::lynxtune::noteC+i)))
+                    param->setValueNotifyingHost(enabled?1.0f:0.0f);
+                noteKeys[(size_t)i].setToggleState(enabled,juce::dontSendNotification);
+            }
+            lastLearnedMask=mask;
+        }
+    }
+    repaint();
+}
 
 void LynxTunerAudioProcessorEditor::paint(juce::Graphics& g) {
     g.fillAll(bg);
