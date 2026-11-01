@@ -1,14 +1,14 @@
-#include "core/LynxTune.h"
+#include "LynxTune.h"
 
 #include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <cstdio>
 
-#include "core/Effects.h"
-#include "core/Song.h"
+#include "Effects.h"
+#include "Song.h"
 #include <mutex>
-#include "core/VocalPitch.h"
+#include "VocalPitch.h"
 
 namespace lynx::lynxtune
 {
