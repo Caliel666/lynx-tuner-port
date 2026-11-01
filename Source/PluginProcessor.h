@@ -3,6 +3,7 @@
 #include "DSP/Effects.h"
 #include "DSP/LynxTune.h"
 #include <array>
+#include <atomic>
 #include <memory>
 #include <vector>
 
