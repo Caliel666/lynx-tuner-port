@@ -29,6 +29,7 @@ private:
     int activePage = 0;
     std::array<float, 180> pitchHistory{};
     int pitchHistoryWrite = 0;
+    int lastLearnedMask = -1;
     bool removeMode = true;
     juce::String midiNoteName(float normalized) const;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LynxTunerAudioProcessorEditor)
