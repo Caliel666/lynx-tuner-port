@@ -1,4 +1,4 @@
-#include "core/VocalPitch.h"
+#include "VocalPitch.h"
 
 #include <algorithm>
 #include <cmath>
