@@ -78,6 +78,7 @@ LynxTunerAudioProcessorEditor::LynxTunerAudioProcessorEditor(LynxTunerAudioProce
     title.setColour(juce::Label::textColourId,text);
     title.setFont(juce::Font(18.0f,juce::Font::bold));
     addAndMakeVisible(title);
+    startTimerHz(30);
 }
 
 juce::String LynxTunerAudioProcessorEditor::midiNoteName(float normalized) const {
@@ -117,8 +118,14 @@ void LynxTunerAudioProcessorEditor::paint(juce::Graphics& g) {
         g.setColour(juce::Colour(0xff444650));
         g.drawLine(c.x+std::cos(a)*inner,c.y+std::sin(a)*inner,c.x+std::cos(a)*outer,c.y+std::sin(a)*outer,4.0f*sx);
     }
-    g.setColour(muted); g.setFont(juce::Font(14.0f*sx)); g.drawText("--",R(580,382,92,38).toNearestInt(),juce::Justification::centred);
-    g.setFont(juce::Font(12.0f*sx)); g.drawText("no pitch",R(570,421,112,24).toNearestInt(),juce::Justification::centred);
+    const float sung = processor.engine().controlOutput(0);
+    const float target = processor.engine().controlOutput(1);
+    const float correction = (processor.engine().controlOutput(2) - 0.5f) * 8.0f;
+    const bool voiced = sung > 0.0f;
+    g.setColour(text); g.setFont(juce::Font(25.0f*sx,juce::Font::bold));
+    g.drawText(voiced ? midiNoteName(target) : "--",R(580,374,92,38).toNearestInt(),juce::Justification::centred);
+    g.setFont(juce::Font(12.0f*sx));
+    g.drawText(voiced ? juce::String(correction,1) + " cents" : "no pitch",R(570,414,112,24).toNearestInt(),juce::Justification::centred);
     g.drawText("HOLD",R(580,450,92,22).toNearestInt(),juce::Justification::centred);
 
     // Pitch graph panel and octave keyboard bed.
