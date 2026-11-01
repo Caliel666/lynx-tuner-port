@@ -214,7 +214,8 @@ void LynxTunerAudioProcessorEditor::resized() {
     set(transpose,915,133,110,60); set(inScale,913,177,120,25); set(reference,1060,104,90,94); set(mix,1152,104,80,94);
     set(classic,18,244,130,30); set(learnScale,1072,244,150,30);
     set(retune,48,295,210,260); set(flexTune,280,363,150,170); set(naturalVibrato,810,363,150,170); set(humanize,982,295,210,260);
-    set(voicePreset,18,820,190,28);\n    for(int i=0;i<3;++i) set(pages[(size_t)i],16+i*170,596,168,32);
+    set(voicePreset,18,820,190,28);
+    for(int i=0;i<3;++i) set(pages[(size_t)i],16+i*170,596,168,32);
     for(int i=0;i<12;++i) set(noteKeys[(size_t)i],18+i*100,853,94,30);
     const bool adv=activePage==1, rt=activePage==2;
     for(auto* c:{(juce::Component*)&retune,(juce::Component*)&flexTune,(juce::Component*)&naturalVibrato,(juce::Component*)&humanize})
