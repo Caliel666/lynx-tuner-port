@@ -47,24 +47,45 @@ void LynxTunerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
     for (int ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
         buffer.clear(ch, 0, samples);
 
-    for (const auto metadata : midi) {
-        const auto msg = metadata.getMessage();
-        if (msg.isNoteOn() || msg.isNoteOff()) {
-            const int channel = juce::jlimit(0, 15, msg.getChannel() - 1);
-            const int note = juce::jlimit(0, 127, msg.getNoteNumber());
-            auto& word = heldNotes[(size_t)channel][(size_t)(note >> 6)];
-            const auto bit = (std::uint64_t{1} << (note & 63));
-            if (msg.isNoteOn()) word |= bit; else word &= ~bit;
-        }
-    }
-    effect->setHeldNotes(heldNotes.data(), (int)heldNotes.size());
     for (size_t i = 0; i < values.size(); ++i)
         values[i] = parameterPointers[i]->load(std::memory_order_relaxed);
 
     if (channels > 0) {
         auto* left = buffer.getWritePointer(0);
         auto* right = channels > 1 ? buffer.getWritePointer(1) : left;
-        effect->process(left, right, samples, values, 120.0);
+        int cursor = 0;
+
+        // Apply MIDI at its actual sample offset. Processing the whole block after
+        // applying every event made short notes disappear and could leave a note
+        // held for audio that occurred before its note-on.
+        for (const auto metadata : midi) {
+            const auto msg = metadata.getMessage();
+            if (!msg.isNoteOn() && !msg.isNoteOff())
+                continue;
+
+            const int eventSample = juce::jlimit(cursor, samples, metadata.samplePosition);
+            const int segmentLength = eventSample - cursor;
+            if (segmentLength > 0) {
+                effect->setHeldNotes(heldNotes.data(), (int)heldNotes.size());
+                effect->process(left + cursor, right + cursor, segmentLength, values, 120.0);
+            }
+
+            const int channel = juce::jlimit(0, 15, msg.getChannel() - 1);
+            const int note = juce::jlimit(0, 127, msg.getNoteNumber());
+            auto& word = heldNotes[(size_t)channel][(size_t)(note >> 6)];
+            const auto bit = (std::uint64_t{1} << (note & 63));
+            if (msg.isNoteOn())
+                word |= bit;
+            else
+                word &= ~bit;
+
+            cursor = eventSample;
+        }
+
+        if (cursor < samples) {
+            effect->setHeldNotes(heldNotes.data(), (int)heldNotes.size());
+            effect->process(left + cursor, right + cursor, samples - cursor, values, 120.0);
+        }
     }
     const int latency = effect->latencySamples();
     if (latency != lastLatency) { setLatencySamples(latency); lastLatency = latency; }
