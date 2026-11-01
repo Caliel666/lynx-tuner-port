@@ -1,0 +1,26 @@
+name: Build VST3
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure
+        run: cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=Release
+      - name: Build VST3
+        run: cmake --build build --config Release --target LynxTuner_VST3
+      - name: Upload plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: LYNX-Tuner-VST3-windows-x64
+          path: build/LynxTuner_artefacts/Release/VST3/LYNX Tuner.vst3
