@@ -49,14 +49,14 @@ LynxTunerAudioProcessorEditor::LynxTunerAudioProcessorEditor(LynxTunerAudioProce
 
     addSlider(tracking,12); addSlider(retune,2); addSlider(flexTune,25);
     addSlider(naturalVibrato,26); addSlider(humanize,3); addSlider(formantShift,5);
-    addSlider(throat,56); addSlider(transpose,6); addSlider(reference,7); addSlider(mix,11);
+    addSlider(throat,89); addSlider(transpose,6); addSlider(reference,7); addSlider(mix,11);
     addCombo(inputRange,8,{"Soprano","Alto / Tenor","Low male","Instrument"},4);
     addCombo(key,0,{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"},12);
     addCombo(scale,1,{"Chromatic","Major","Minor","Harmonic minor","Melodic minor","Major pentatonic","Minor pentatonic","Blues","Dorian","Mixolydian","Phrygian","Lydian","Locrian","Custom"},14);
     addCombo(midiChannel,10,{"Off","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16"},17);
     addToggle(lowLatency,"LOW LATENCY",9); addToggle(formant,"FORMANT",4);
-    addToggle(classic,"CLASSIC",48); addToggle(learnScale,"LEARN SCALE",47);
-    addToggle(inScale,"IN SCALE",55);
+    addToggle(classic,"CLASSIC",47); addToggle(learnScale,"LEARN SCALE",46);
+    addToggle(inScale,"IN SCALE",93);
 
     const char* tabNames[]={"PITCH GRAPH","ADVANCED","REAL-TIME"};
     for (int i=0;i<3;++i) {
@@ -66,8 +66,8 @@ LynxTunerAudioProcessorEditor::LynxTunerAudioProcessorEditor(LynxTunerAudioProce
         addAndMakeVisible(pages[(size_t)i]);
     }
     for (int i=0;i<12;++i) {
-        noteKeys[(size_t)i].setButtonText(juce::String::charToString("C C# D D# E F F# G G# A A# B"[0]));
-        noteKeys[(size_t)i].setButtonText(juce::String({"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"}[(size_t)i]));
+        noteKeys[(size_t)i].setButtonText(juce::String::fromUTF8((const char*[]){"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"}[i]));
+        buttonAttachments.push_back(std::make_unique<ButtonAttachment>(state, "p" + juce::String(13+i), noteKeys[(size_t)i]));
         noteKeys[(size_t)i].setClickingTogglesState(true);
         noteKeys[(size_t)i].setColour(juce::TextButton::buttonColourId, panel);
         noteKeys[(size_t)i].setColour(juce::TextButton::buttonOnColourId, accent);
