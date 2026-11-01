@@ -65,8 +65,9 @@ LynxTunerAudioProcessorEditor::LynxTunerAudioProcessorEditor(LynxTunerAudioProce
         pages[(size_t)i].onClick=[this,i]{ activePage=i; resized(); repaint(); };
         addAndMakeVisible(pages[(size_t)i]);
     }
+    static constexpr const char* noteNames[12] = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
     for (int i=0;i<12;++i) {
-        noteKeys[(size_t)i].setButtonText(juce::String::fromUTF8((const char*[]){"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"}[i]));
+        noteKeys[(size_t)i].setButtonText(noteNames[i]);
         buttonAttachments.push_back(std::make_unique<ButtonAttachment>(state, "p" + juce::String(13+i), noteKeys[(size_t)i]));
         noteKeys[(size_t)i].setClickingTogglesState(true);
         noteKeys[(size_t)i].setColour(juce::TextButton::buttonColourId, panel);
