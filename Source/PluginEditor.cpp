@@ -425,4 +425,268 @@ void LynxTunerAudioProcessorEditor::paint (juce::Graphics& g)
     paintKeyboard (g, sx, sy);
 }
 
-void LynxTunerAudioProcessorEditor::paintCorrectionDial (juce::Graphics& g, float 
+
+void LynxTunerAudioProcessorEditor::paintCorrectionDial (juce::Graphics& g, float sx, float sy)
+{
+    const auto bounds = juce::Rectangle<float> (469.0f*sx, 246.0f*sy, 314.0f*sx, 314.0f*sy);
+    const auto centre = bounds.getCentre();
+    const float radius = bounds.getWidth() * 0.5f;
+    const float sung = processor.engine().controlOutput (0);
+    const float target = processor.engine().controlOutput (1);
+    const float cents = (processor.engine().controlOutput (2) - 0.5f) * 400.0f;
+    const bool voiced = sung > 0.0f;
+
+    g.setColour (juce::Colour (0xff08090e));
+    g.fillEllipse (bounds);
+    g.setColour (juce::Colour (0xff343541));
+    g.drawEllipse (bounds.reduced (7.0f*sx), 4.0f*sx);
+
+    for (int i = 0; i < 50; ++i)
+    {
+        const float angle = juce::MathConstants<float>::twoPi * (float)i / 50.0f
+                          - juce::MathConstants<float>::halfPi;
+        const float inner = radius * 0.87f;
+        const float outer = radius * 0.97f;
+        g.setColour (juce::Colour (0xff444650));
+        g.drawLine (centre.x + std::cos (angle)*inner, centre.y + std::sin (angle)*inner,
+                    centre.x + std::cos (angle)*outer, centre.y + std::sin (angle)*outer, 4.0f*sx);
+    }
+
+    if (voiced)
+    {
+        const float angle = juce::MathConstants<float>::twoPi
+                          * juce::jlimit (-1.0f, 1.0f, cents / 100.0f) * 0.25f
+                          - juce::MathConstants<float>::halfPi;
+        g.setColour (accentLight);
+        g.drawLine (centre.x + std::cos (angle)*radius*0.78f,
+                    centre.y + std::sin (angle)*radius*0.78f,
+                    centre.x + std::cos (angle)*radius*0.98f,
+                    centre.y + std::sin (angle)*radius*0.98f, 5.0f*sx);
+    }
+
+    g.setColour (text);
+    g.setFont (juce::FontOptions (25.0f*sx).withStyle ("Bold"));
+    g.drawText (voiced ? midiNoteName (target) : "--",
+                juce::Rectangle<int> (juce::roundToInt (centre.x - 55*sx),
+                                      juce::roundToInt (centre.y - 28*sy),
+                                      juce::roundToInt (110*sx), juce::roundToInt (38*sy)),
+                juce::Justification::centred);
+    g.setFont (juce::FontOptions (12.0f*sx));
+    g.drawText (voiced ? juce::String (cents, 1) + " cents" : "no pitch",
+                juce::Rectangle<int> (juce::roundToInt (centre.x - 65*sx),
+                                      juce::roundToInt (centre.y + 12*sy),
+                                      juce::roundToInt (130*sx), juce::roundToInt (22*sy)),
+                juce::Justification::centred);
+    g.setColour (muted);
+    g.drawText ("HOLD",
+                juce::Rectangle<int> (juce::roundToInt (centre.x - 45*sx),
+                                      juce::roundToInt (centre.y + 48*sy),
+                                      juce::roundToInt (90*sx), juce::roundToInt (18*sy)),
+                juce::Justification::centred);
+}
+
+void LynxTunerAudioProcessorEditor::paintPitchGraph (juce::Graphics& g, float sx, float sy)
+{
+    const juce::Rectangle<float> graph (10.0f*sx, 637.0f*sy, 1220.0f*sx, 165.0f*sy);
+    g.setColour (panelDark);
+    g.fillRoundedRectangle (graph, 8.0f*sx);
+
+    constexpr int lowestMidi = 36;
+    constexpr int highestMidi = 84;
+    const float laneHeight = graph.getHeight() / (float)(highestMidi - lowestMidi + 1);
+    g.setFont (juce::FontOptions (9.0f*sx));
+    for (int note = lowestMidi; note <= highestMidi; ++note)
+    {
+        const float y = graph.getY() + (float)(highestMidi - note) * laneHeight;
+        g.setColour (juce::Colour (0xff41404d));
+        g.drawHorizontalLine (juce::roundToInt (y), graph.getX()+10.0f*sx, graph.getRight()-8.0f*sx);
+        if (note % 12 == 0)
+        {
+            g.setColour (muted);
+            g.drawText (midiNoteName ((float)note / 127.0f),
+                        juce::Rectangle<int> (juce::roundToInt (graph.getX()+6*sx),
+                                              juce::roundToInt (y),
+                                              juce::roundToInt (32*sx),
+                                              juce::roundToInt (laneHeight+2*sx)),
+                        juce::Justification::centredLeft);
+        }
+    }
+
+    juce::Path trace;
+    bool started = false;
+    for (int i = 0; i < (int)pitchHistory.size(); ++i)
+    {
+        const int index = (pitchHistoryWrite + i) % (int)pitchHistory.size();
+        const float pitch = pitchHistory[(size_t)index];
+        if (pitch <= 0.0f) { started = false; continue; }
+        const float midi = pitch * 127.0f;
+        const float y = graph.getBottom() - (midi - (float)lowestMidi)
+                      / (float)(highestMidi - lowestMidi) * graph.getHeight();
+        const float x = graph.getX() + 42.0f*sx
+                      + (float)i * (graph.getWidth()-52.0f*sx) / (float)(pitchHistory.size()-1);
+        if (!started) { trace.startNewSubPath (x, y); started = true; }
+        else trace.lineTo (x, y);
+    }
+    g.setColour (accentLight);
+    g.strokePath (trace, juce::PathStrokeType (2.0f*sx));
+}
+
+void LynxTunerAudioProcessorEditor::paintKeyboard (juce::Graphics& g, float sx, float sy)
+{
+    const juce::Rectangle<float> bed (16.0f*sx, 909.0f*sy, 1218.0f*sx, 54.0f*sy);
+    g.setColour (accent);
+    g.fillRoundedRectangle (juce::Rectangle<float> (16.0f*sx, 893.0f*sy, 1218.0f*sx, 12.0f*sy), 3.0f*sx);
+    g.setColour (juce::Colour (0xffd9dbe0));
+    g.fillRoundedRectangle (bed, 4.0f*sx);
+
+    constexpr int whiteCount = 28;
+    const float whiteWidth = bed.getWidth() / (float)whiteCount;
+    static constexpr int whiteSemitones[7] = { 0, 2, 4, 5, 7, 9, 11 };
+    for (int i = 0; i < whiteCount; ++i)
+    {
+        const int note = 48 + (i/7)*12 + whiteSemitones[i%7];
+        const bool enabled = noteKeys[(size_t)(note%12)].getToggleState();
+        const float x = bed.getX() + (float)i*whiteWidth;
+        g.setColour (enabled ? juce::Colour (0xfff2c8d8) : juce::Colour (0xffd9dbe0));
+        g.fillRect (juce::Rectangle<float> (x+0.5f*sx, bed.getY()+0.5f*sy,
+                                            whiteWidth-sx, bed.getHeight()-sy));
+        g.setColour (juce::Colour (0xff343640));
+        g.drawRect (juce::Rectangle<float> (x, bed.getY(), whiteWidth, bed.getHeight()), 0.8f*sx);
+        if (note % 12 == 0)
+        {
+            g.setColour (juce::Colour (0xff30313a));
+            g.setFont (juce::FontOptions (9.0f*sx));
+            g.drawText (midiNoteName ((float)note/127.0f),
+                        juce::Rectangle<int> (juce::roundToInt (x+3*sx),
+                                              juce::roundToInt (bed.getBottom()-14*sy),
+                                              juce::roundToInt (whiteWidth-6*sx),
+                                              juce::roundToInt (11*sy)),
+                        juce::Justification::centredLeft);
+        }
+    }
+
+    static constexpr bool hasBlack[12] = { false,true,false,true,false,false,true,false,true,false,true,false };
+    for (int i = 0; i < whiteCount-1; ++i)
+    {
+        const int note = 48 + (i/7)*12 + whiteSemitones[i%7];
+        const int next = 48 + ((i+1)/7)*12 + whiteSemitones[(i+1)%7];
+        if (next-note != 2) continue;
+        const int blackNote = note+1;
+        const float x = bed.getX() + ((float)i+0.68f)*whiteWidth;
+        const float w = whiteWidth*0.62f;
+        g.setColour (noteKeys[(size_t)(blackNote%12)].getToggleState()
+                         ? juce::Colour (0xffa84a70) : juce::Colour (0xff17181f));
+        g.fillRoundedRectangle (juce::Rectangle<float> (x, bed.getY(), w, bed.getHeight()*0.60f), 2.0f*sx);
+    }
+}
+
+void LynxTunerAudioProcessorEditor::handleKeyboardClick (float x, float y)
+{
+    const float sx = (float)getWidth() / 1240.0f;
+    const float sy = (float)getHeight() / 965.0f;
+    const float px = x / sx;
+    const float py = y / sy;
+    if (py < 909.0f || py > 963.0f || px < 16.0f || px > 1234.0f)
+        return;
+
+    const float keyWidth = 1218.0f / 28.0f;
+    const int whiteIndex = juce::jlimit (0, 27, (int)((px-16.0f)/keyWidth));
+    static constexpr int whiteSemitones[7] = { 0, 2, 4, 5, 7, 9, 11 };
+    int note = 48 + (whiteIndex/7)*12 + whiteSemitones[whiteIndex%7];
+
+    // Detect black-key area and map it to the adjacent semitone.
+    const float within = std::fmod (px-16.0f, keyWidth);
+    if (py < 941.0f && within > keyWidth*0.68f && whiteIndex < 27)
+    {
+        const int next = 48 + ((whiteIndex+1)/7)*12 + whiteSemitones[(whiteIndex+1)%7];
+        if (next-note == 2) ++note;
+    }
+
+    auto& button = noteKeys[(size_t)(note%12)];
+    button.setToggleState (!button.getToggleState(), juce::sendNotification);
+}
+
+void LynxTunerAudioProcessorEditor::resized()
+{
+    const float sx = (float)getWidth() / 1240.0f;
+    const float sy = (float)getHeight() / 965.0f;
+    auto set = [&] (juce::Component& component, float x, float y, float w, float h)
+    {
+        component.setBounds (juce::roundToInt (x*sx), juce::roundToInt (y*sy),
+                             juce::roundToInt (w*sx), juce::roundToInt (h*sy));
+    };
+
+    set (title, 84, 10, 190, 34);
+    set (tracking, 22, 105, 70, 88);
+    set (inputRange, 104, 126, 166, 35);
+    set (key, 279, 126, 81, 35);
+    set (scale, 370, 126, 143, 35);
+    set (lowLatency, 542, 102, 190, 32);
+    set (midiChannel, 542, 166, 190, 30);
+    set (formant, 765, 102, 140, 30);
+    set (formantShift, 772, 132, 70, 70);
+    set (throat, 842, 132, 70, 70);
+    set (transpose, 915, 133, 110, 60);
+    set (inScale, 913, 177, 120, 25);
+    set (reference, 1060, 104, 90, 94);
+    set (mix, 1152, 104, 80, 94);
+
+    set (classic, 18, 244, 130, 30);
+    set (learnScale, 1072, 244, 150, 30);
+    set (retune, 48, 295, 210, 260);
+    set (flexTune, 280, 363, 150, 170);
+    set (naturalVibrato, 810, 363, 150, 170);
+    set (humanize, 982, 295, 210, 260);
+
+    for (int i = 0; i < 3; ++i)
+        set (pages[(size_t)i], 16+i*170, 596, 168, 32);
+    for (int i = 0; i < 12; ++i)
+        set (noteKeys[(size_t)i], 18+i*100, 853, 94, 30);
+
+    const bool mainPage = activePage == 0;
+    const bool adv = activePage == 1;
+    const bool rt = activePage == 2;
+    for (auto* component : { (juce::Component*)&retune, (juce::Component*)&flexTune,
+                             (juce::Component*)&naturalVibrato, (juce::Component*)&humanize,
+                             (juce::Component*)&classic, (juce::Component*)&learnScale })
+        component->setVisible (mainPage);
+
+    auto setPageControl = [&] (juce::Component& component, float x, float y, float w, float h, bool visible)
+    {
+        set (component, x, y, w, h);
+        component.setVisible (visible);
+    };
+    setPageControl (speedLink, 30, 625, 100, 28, rt);
+    setPageControl (speed, 140, 620, 120, 150, rt);
+    setPageControl (tolCents, 290, 620, 120, 150, rt);
+    setPageControl (tolTime, 440, 620, 120, 150, rt);
+    setPageControl (vibDepth, 590, 620, 120, 150, rt);
+    setPageControl (correctionAmt, 740, 620, 120, 150, rt);
+    setPageControl (refTone, 880, 625, 110, 28, rt);
+    setPageControl (refToneLevel, 1000, 620, 120, 150, rt);
+    setPageControl (vibratoEnable, 30, 775, 130, 26, rt);
+
+    setPageControl (vibratoShape, 30, 625, 180, 30, adv);
+    setPageControl (ignoreVibrato, 230, 625, 180, 28, adv);
+    setPageControl (vibRate, 30, 660, 110, 130, adv);
+    setPageControl (vibDepthAdv, 150, 660, 110, 130, adv);
+    setPageControl (vibAmp, 270, 660, 110, 130, adv);
+    setPageControl (vibFormant, 390, 660, 110, 130, adv);
+    setPageControl (vibVar, 510, 660, 110, 130, adv);
+    setPageControl (vibDelay, 630, 660, 110, 130, adv);
+    setPageControl (vibOnset, 750, 660, 110, 130, adv);
+    setPageControl (driveStage, 880, 625, 150, 28, adv);
+    setPageControl (wideFormant, 1030, 625, 170, 28, adv);
+    setPageControl (drive, 900, 660, 110, 130, adv);
+    setPageControl (outputTrim, 1030, 660, 110, 130, adv);
+}
+
+void LynxTunerAudioProcessorEditor::mouseDown (const juce::MouseEvent& event)
+{
+    handleKeyboardClick (event.position.x, event.position.y);
+}
+
+void LynxTunerAudioProcessorEditor::mouseDrag (const juce::MouseEvent& event)
+{
+    handleKeyboardClick (event.position.x, event.position.y);
+}
