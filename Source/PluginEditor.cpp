@@ -138,6 +138,21 @@ void LynxTunerAudioProcessorEditor::paint(juce::Graphics& g) {
     section(R(0,214,1240,373),"CORRECTION");
     section(R(0,592,1240,220),"");
     section(R(0,818,1240,147),"TARGET NOTES");
+    auto valueText=[&](const juce::Slider& slider,int param,juce::Rectangle<float> bounds) {
+        g.setColour(text); g.setFont(juce::Font(11.0f*sx));
+        g.drawFittedText(lynx::lynxtune::paramText(param,(float)slider.getValue()),bounds.toNearestInt(),juce::Justification::centred,1);
+    };
+    valueText(tracking,lynx::lynxtune::tracking,R(14,190,86,18));
+    valueText(retune,lynx::lynxtune::retune,R(90,548,130,18));
+    valueText(flexTune,lynx::lynxtune::flexTune,R(295,532,120,18));
+    valueText(naturalVibrato,lynx::lynxtune::naturalVibrato,R(822,532,125,18));
+    valueText(humanize,lynx::lynxtune::humanize,R(1020,548,130,18));
+    valueText(formantShift,lynx::lynxtune::formantShift,R(760,194,90,16));
+    valueText(throat,lynx::lynxtune::throatLength,R(842,194,90,16));
+    valueText(transpose,lynx::lynxtune::transpose,R(915,194,110,16));
+    valueText(reference,lynx::lynxtune::reference,R(1060,194,90,16));
+    valueText(mix,lynx::lynxtune::mix,R(1152,194,80,16));
+
 
     // Original LYNX Tune correction dial: segmented ±100-cent ring and central pitch readout.
     const auto c=R(469,246,314,314).getCentre(); const float rad=R(469,246,314,314).getWidth()*0.5f;
@@ -151,7 +166,7 @@ void LynxTunerAudioProcessorEditor::paint(juce::Graphics& g) {
     }
     const float sung = processor.engine().controlOutput(0);
     const float target = processor.engine().controlOutput(1);
-    const float correction = (processor.engine().controlOutput(2) - 0.5f) * 8.0f;
+    const float correction = (processor.engine().controlOutput(2) - 0.5f) * 400.0f; // cents
     const bool voiced = sung > 0.0f;
     if (voiced) {
         const float a = juce::MathConstants<float>::twoPi * juce::jlimit(-1.0f,1.0f,correction/100.0f) * 0.25f - juce::MathConstants<float>::halfPi;
