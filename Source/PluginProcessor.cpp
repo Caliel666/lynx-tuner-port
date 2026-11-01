@@ -7,7 +7,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout LynxTunerAudioProcessor::cre
     for (int i = 0; i < (int)info.params.size(); ++i) {
         const auto& p = info.params[(size_t)i];
         layout.add(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID{"p" + juce::String(i), 1}, p.name,
+            juce::ParameterID{juce::String("p") + juce::String(i), 1}, p.name,
             juce::NormalisableRange<float>{0.0f, 1.0f}, p.defaultValue));
     }
     return layout;
@@ -23,7 +23,7 @@ LynxTunerAudioProcessor::LynxTunerAudioProcessor()
     parameterPointers.reserve((size_t)count);
     values.resize((size_t)count);
     for (int i = 0; i < count; ++i)
-        parameterPointers.push_back(apvts.getRawParameterValue("p" + juce::String(i)));
+        parameterPointers.push_back(apvts.getRawParameterValue(juce::String("p") + juce::String(i)));
 }
 
 void LynxTunerAudioProcessor::prepareToPlay(double sampleRate, int) {
